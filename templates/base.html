@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Nouri{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest: '#1B4D3E',
+            mint:   '#00A878',
+            gold:   '#C9A84C',
+            ink:    '#0D1117',
+            mist:   '#F4F6F2',
+            warm:   '#F9F7F3',
+          },
+          fontFamily: {
+            serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+            sans:  ['DM Sans', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: #F9F7F3; min-height: 100vh; }
+    h1, h2, h3, .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+    /* Animated gradient blobs */
+    .blob-container { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.35;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .blob-1 { width: 500px; height: 500px; background: #1B4D3E; top: -150px; left: -100px; animation-duration: 14s; }
+    .blob-2 { width: 400px; height: 400px; background: #00A878; bottom: -120px; right: -80px; animation-duration: 10s; animation-delay: -4s; }
+    .blob-3 { width: 300px; height: 300px; background: #C9A84C; top: 40%; left: 50%; transform: translateX(-50%); animation-duration: 16s; animation-delay: -8s; }
+    @keyframes drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      50%  { transform: translate(30px, -20px) scale(1.05); }
+      100% { transform: translate(-20px, 30px) scale(0.95); }
+    }
+
+    /* Glass card */
+    .glass {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(27, 77, 62, 0.08);
+    }
+
+    /* Inputs */
+    .nouri-input {
+      width: 100%; padding: 12px 16px;
+      border: 1.5px solid rgba(27, 77, 62, 0.15);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.8);
+      font-family: 'DM Sans', sans-serif; font-size: 15px; color: #0D1117;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .nouri-input:focus {
+      border-color: #00A878;
+      box-shadow: 0 0 0 3px rgba(0, 168, 120, 0.12);
+    }
+    .nouri-label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: #1B4D3E; margin-bottom: 6px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 14px 32px; border-radius: 100px;
+      background: #1B4D3E; color: white;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(27, 77, 62, 0.25);
+    }
+    .btn-primary:hover { background: #153d31; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(27, 77, 62, 0.3); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-mint {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 14px 32px; border-radius: 100px;
+      background: #00A878; color: white;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(0, 168, 120, 0.3);
+    }
+    .btn-mint:hover { background: #009068; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0, 168, 120, 0.35); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px 28px; border-radius: 100px;
+      background: transparent; color: #1B4D3E;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+      text-decoration: none; border: 1.5px solid rgba(27, 77, 62, 0.3); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { border-color: #1B4D3E; background: rgba(27, 77, 62, 0.05); }
+
+    /* Checkbox card */
+    .check-card input[type="checkbox"] { display: none; }
+    .check-card label {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: 10px;
+      border: 1.5px solid rgba(27, 77, 62, 0.15);
+      background: rgba(255,255,255,0.7); cursor: pointer;
+      font-size: 14px; color: #0D1117;
+      transition: all 0.18s;
+    }
+    .check-card label:hover { border-color: #00A878; background: rgba(0,168,120,0.06); }
+    .check-card input[type="checkbox"]:checked + label {
+      border-color: #00A878; background: rgba(0,168,120,0.1); color: #1B4D3E; font-weight: 500;
+    }
+    .check-icon {
+      width: 18px; height: 18px; border-radius: 4px;
+      border: 1.5px solid rgba(27,77,62,0.3); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s;
+    }
+    .check-card input[type="checkbox"]:checked + label .check-icon {
+      background: #00A878; border-color: #00A878;
+    }
+    .check-card input[type="checkbox"]:checked + label .check-icon::after {
+      content: '✓'; color: white; font-size: 11px; font-weight: 700;
+    }
+
+    /* Radio card */
+    .radio-card input[type="radio"] { display: none; }
+    .radio-card label {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; border-radius: 12px;
+      border: 1.5px solid rgba(27, 77, 62, 0.15);
+      background: rgba(255,255,255,0.7); cursor: pointer;
+      transition: all 0.18s;
+    }
+    .radio-card label:hover { border-color: #00A878; background: rgba(0,168,120,0.06); }
+    .radio-card input[type="radio"]:checked + label {
+      border-color: #00A878; background: rgba(0,168,120,0.1); color: #1B4D3E;
+    }
+    .radio-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 1.5px solid rgba(27,77,62,0.3); flex-shrink: 0;
+      transition: all 0.18s;
+    }
+    .radio-card input[type="radio"]:checked + label .radio-dot {
+      background: #00A878; border-color: #00A878;
+      box-shadow: inset 0 0 0 3px white;
+    }
+
+    /* Progress bar */
+    .progress-track { background: rgba(27,77,62,0.1); border-radius: 100px; height: 4px; }
+    .progress-fill { background: linear-gradient(90deg, #1B4D3E, #00A878); border-radius: 100px; height: 4px; transition: width 0.4s ease; }
+
+    /* Nav */
+    nav { position: relative; z-index: 10; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Animated background blobs -->
+  <div class="blob-container">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+    <a href="/" class="flex items-center gap-2 text-forest no-underline">
+      <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
+        <path d="M8 28V10C8 10 8 6 13 6C18 6 18 10 18 10V18C18 18 18 22 23 22C28 22 28 18 28 18V8"
+              stroke="#1B4D3E" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M18 14C18 14 20 18 23 18" stroke="#00A878" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="28" cy="28" r="3" fill="#C9A84C"/>
+      </svg>
+      <span style="font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; color:#1B4D3E; letter-spacing:0.02em;">Nouri</span>
+    </a>
+    <div class="flex items-center gap-4">
+      <button onclick="toggleLang()" id="lang-toggle"
+        style="font-size:12px; font-weight:500; letter-spacing:0.06em; color:#1B4D3E;
+               border:1.5px solid rgba(27,77,62,0.25); border-radius:100px; padding:5px 14px;
+               background:rgba(255,255,255,0.6); cursor:pointer; backdrop-filter:blur(8px);">
+        EN / PL
+      </button>
+      {% if user.is_authenticated %}
+        <a href="/accounts/logout/" class="btn-ghost" style="padding:8px 20px; font-size:13px;" data-i18n="nav.signout">Sign Out</a>
+      {% else %}
+        <a href="/accounts/login/" class="btn-ghost" style="padding:8px 20px; font-size:13px;" data-i18n="nav.signin">Sign In</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main style="position: relative; z-index: 1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    const TRANSLATIONS = {
+      en: {
+        // NAV
+        'nav.signin': 'Sign In', 'nav.signout': 'Sign Out',
+        // WELCOME
+        'welcome.headline': 'Nourish with<br><em>intention</em>',
+        'welcome.subtitle': 'AI-powered nutrition guidance designed by a<br>Registered Dietitian \u2014 personalized to you.',
+        'welcome.cta.start': "Get Started \u2014 It's Free",
+        'welcome.tagline': 'Built by a Registered Dietitian \u00b7 Evidence-based',
+        // SHARED
+        'btn.back': '\u2190 Back', 'btn.continue': 'Continue \u2192',
+        'lbl.optional': '(optional)', 'lbl.select_all': 'Select all that apply',
+        'lbl.specify': 'Please specify',
+        'form.email': 'Email', 'form.password': 'Password',
+        // PROGRESS
+        'prog.step1':'Step 1 of 5','prog.step2':'Step 2 of 5','prog.step3':'Step 3 of 5',
+        'prog.step4':'Step 4 of 5','prog.step5':'Step 5 of 5',
+        'prog.advisor':'Advisor','prog.about':'About You','prog.health':'Health Profile',
+        'prog.diet':'Diet Preferences','prog.recall':'Food Recall',
+        // PERSONA
+        'persona.heading': 'Choose your advisor',
+        'persona.subtitle': 'Each specialist has a different approach. Pick the one that feels right for your journey.',
+        'persona.sarah.desc': 'Registered Dietitian \u00b7 Warm, evidence-based, practical',
+        'persona.maya.desc': 'Performance Specialist \u00b7 Energetic, motivating, results-driven',
+        'persona.lena.desc': 'Pregnancy &amp; Postpartum RD \u00b7 Gentle, reassuring, safety-first',
+        // BASIC PROFILE
+        'basic.heading': 'Tell us about yourself',
+        'basic.subtitle': 'This helps us personalize your nutrition plan accurately.',
+        'basic.dob': 'Date of Birth', 'basic.sex': 'Biological Sex',
+        'basic.weight': 'Weight (kg)', 'basic.height': 'Height (cm)',
+        'basic.goal': 'Primary Goal',
+        'sex.male':'Male','sex.female':'Female','sex.other':'Other / Prefer not to say',
+        'goal.lose_weight':'Lose Weight','goal.gain_muscle':'Gain Muscle',
+        'goal.eat_healthier':'Eat Healthier','goal.manage_condition':'Manage a Health Condition',
+        'goal.pregnancy':'Pregnancy / Postpartum Support','goal.energy':'More Energy',
+        // HEALTH QUESTIONNAIRE
+        'hq.heading': 'Your health profile',
+        'hq.subtitle.pre': 'This information allows',
+        'hq.subtitle.post': 'to tailor your nutrition recommendations safely and effectively. All data is private and secure.',
+        'hq.activity': 'Activity Level',
+        'act.sedentary':'Sedentary','act.sedentary.desc':'Desk job, little or no exercise',
+        'act.lightly_active':'Lightly Active','act.lightly_active.desc':'Light exercise 1\u20133 days/week',
+        'act.moderately_active':'Moderately Active','act.moderately_active.desc':'Moderate exercise 3\u20135 days/week',
+        'act.very_active':'Very Active','act.very_active.desc':'Hard exercise or physical job 6\u20137 days/week',
+        'hq.conditions': 'Medical Conditions',
+        'cond.diabetes':'Diabetes (Type 1 or 2)','cond.hypertension':'High Blood Pressure',
+        'cond.high_cholesterol':'High Cholesterol','cond.thyroid':'Thyroid Issues',
+        'cond.ibs_ibd':'IBS / IBD','cond.pcos':'PCOS',
+        'cond.none':'None of the above','cond.other':'Other',
+        'hq.allergies': 'Food Allergies &amp; Intolerances',
+        'allg.gluten':'Gluten / Wheat','allg.dairy':'Dairy','allg.eggs':'Eggs',
+        'allg.nuts':'Tree Nuts','allg.shellfish':'Shellfish','allg.soy':'Soy',
+        'allg.none':'No allergies','allg.other':'Other',
+        'hq.medications': 'Current Medications',
+        'hq.meds.help': 'Some medications interact with nutrients \u2014 knowing this helps us keep you safe.',
+        'hq.supplements': 'Supplements Currently Taking',
+        // DIET PREFERENCES
+        'diet.heading': 'Your food preferences',
+        'diet.subtitle.post': "will use this to build a meal plan you'll actually enjoy \u2014 no foods you hate, no styles that don't fit your life.",
+        'diet.style': 'Dietary Style',
+        'ds.no_restriction':'No Restrictions','ds.no_restriction.desc':'I eat everything',
+        'ds.mediterranean':'Mediterranean','ds.mediterranean.desc':'Olive oil, fish, veggies, whole grains',
+        'ds.vegetarian':'Vegetarian','ds.vegetarian.desc':'No meat, fish is okay',
+        'ds.vegan':'Vegan','ds.vegan.desc':'No animal products',
+        'ds.pescatarian':'Pescatarian','ds.pescatarian.desc':'Fish &amp; seafood, no other meat',
+        'ds.keto':'Keto / Low-Carb','ds.keto.desc':'High fat, very low carbohydrates',
+        'ds.paleo':'Paleo','ds.paleo.desc':'Whole foods, no grains or legumes',
+        'ds.halal':'Halal','ds.halal.desc':'Halal-certified foods only',
+        'ds.kosher':'Kosher','ds.kosher.desc':'Kosher dietary laws',
+        'diet.meals': 'Meals per Day',
+        'freq.2':'2 meals / day','freq.3':'3 meals / day','freq.4':'4 meals / day',
+        'freq.5':'5+ meals / day','freq.if':'Intermittent Fasting',
+        'diet.cook_time': 'Time Available to Cook (per meal)',
+        'cook.under_15':'Under 15 min','cook.15_30':'15\u201330 min',
+        'cook.30_60':'30\u201360 min','cook.over_60':'I love cooking',
+        'diet.dislikes': "Foods You Dislike or Won't Eat",
+        'diet.dislikes.help': "These won't appear in your meal plan \u2014 ever.",
+        'diet.restrictions': 'Additional Dietary Goals',
+        'diet.restrictions.hint': '(optional \u2014 select all that apply)',
+        'restr.low_sodium':'Low Sodium','restr.low_sugar':'Low Sugar','restr.low_fat':'Low Fat',
+        'restr.high_protein':'High Protein','restr.high_fiber':'High Fibre',
+        'restr.low_fodmap':'Low FODMAP','restr.diabetic':'Diabetic-Friendly','restr.other':'Other',
+        // LOGIN
+        'login.heading': 'Welcome back',
+        'login.subtitle': 'Sign in to continue your nutrition journey.',
+        'login.no_account': "Don't have an account?",
+        'login.signup_link': 'Sign Up Free',
+        // SIGNUP
+        'signup.heading': 'Create your account',
+        'signup.subtitle': 'Free to start \u2014 no credit card required.',
+        'signup.confirm_pw': 'Confirm Password',
+        'signup.btn': 'Create Account Free',
+        'signup.have_account': 'Already have an account?',
+        // FOOD RECALL
+        'recall.heading': 'What have you been eating?',
+        'recall.subtitle.pre': 'Log your meals for the past 1\u20133 days.',
+        'recall.subtitle.post': 'will use this to identify nutritional gaps and build your personalized plan. Be as specific or as casual as you like \u2014 \u201cchicken salad\u201d is perfectly fine.',
+        'recall.tip': '\ud83d\udca1 <strong style="color:#5a4015;">Tip:</strong> Include portion sizes if you know them (e.g. \u201c2 eggs\u201d, \u201clarge bowl of oatmeal\u201d). Drinks count too \u2014 coffee, juice, protein shakes. Day 1 is required; Days 2 &amp; 3 improve accuracy.',
+        'recall.day1':'Day 1 \u2014 Today','recall.day2':'Day 2 \u2014 Yesterday','recall.day3':'Day 3 \u2014 Two Days Ago',
+        'recall.required':'Required','recall.opt_day':'Optional \u2014 improves accuracy',
+        'recall.breakfast':'\ud83c\udf05 Breakfast','recall.lunch':'\u2600\ufe0f Lunch','recall.dinner':'\ud83c\udf19 Dinner',
+        'recall.snacks':'\ud83c\udf4e Snacks','recall.opt_badge':'optional',
+        'recall.morning':'Morning','recall.afternoon':'Afternoon','recall.evening':'Evening',
+        'recall.notes':'\ud83d\udcdd Notes',
+        'recall.analyse': 'Analyse My Diet \u2192',
+        'recall.privacy': 'Your data is private and never shared. Used only to generate your personalized nutrition plan.',
+        // PLACEHOLDERS
+        'ph.weight':'e.g. 68.5','ph.height':'e.g. 165',
+        'ph.medications':'e.g. Metformin 500mg, Levothyroxine 50mcg\u2026',
+        'ph.supplements':'e.g. Vitamin D 1000 IU, Magnesium glycinate, Omega-3\u2026',
+        'ph.med_other':"e.g. Crohn's disease, anemia\u2026",
+        'ph.allergy_other':'e.g. sesame, kiwi\u2026',
+        'ph.food_dislikes':'e.g. cilantro, liver, mushrooms, blue cheese\u2026',
+        'ph.rest_other':'e.g. low oxalate, specific carb diet\u2026',
+        'ph.pw':'At least 8 characters','ph.pw_repeat':'Repeat password',
+      },
+      pl: {
+        // NAV
+        'nav.signin': 'Zaloguj si\u0119', 'nav.signout': 'Wyloguj si\u0119',
+        // WELCOME
+        'welcome.headline': 'Od\u017cywiaj z<br><em>intencj\u0105</em>',
+        'welcome.subtitle': 'Spersonalizowane porady \u017cywieniowe oparte na AI,<br>opracowane przez dietetyka klinicznego.',
+        'welcome.cta.start': 'Zacznij \u2014 To bezp\u0142atne',
+        'welcome.tagline': 'Stworzone przez dietetyka klinicznego \u00b7 Oparte na dowodach',
+        // SHARED
+        'btn.back': '\u2190 Wstecz', 'btn.continue': 'Dalej \u2192',
+        'lbl.optional': '(opcjonalne)', 'lbl.select_all': 'Zaznacz wszystkie pasuj\u0105ce',
+        'lbl.specify': 'Prosz\u0119 poda\u0107 szczeg\u00f3\u0142y',
+        'form.email': 'E-mail', 'form.password': 'Has\u0142o',
+        // PROGRESS
+        'prog.step1':'Krok 1 z 5','prog.step2':'Krok 2 z 5','prog.step3':'Krok 3 z 5',
+        'prog.step4':'Krok 4 z 5','prog.step5':'Krok 5 z 5',
+        'prog.advisor':'Doradca','prog.about':'O Tobie','prog.health':'Profil zdrowotny',
+        'prog.diet':'Preferencje \u017cywieniowe','prog.recall':'Dziennik \u017cywienia',
+        // PERSONA
+        'persona.heading': 'Wybierz swojego doradc\u0119',
+        'persona.subtitle': 'Ka\u017cdy specjalista ma inne podej\u015bcie. Wybierz to, kt\u00f3re najlepiej pasuje do Twojej drogi.',
+        'persona.sarah.desc': 'Dietetyk kliniczny \u00b7 Ciep\u0142a, oparta na dowodach, praktyczna',
+        'persona.maya.desc': 'Specjalistka ds. wydajno\u015bci \u00b7 Energiczna, motywuj\u0105ca, nastawiona na wyniki',
+        'persona.lena.desc': 'Dietetyk ci\u0105\u017cowy i poporodowy \u00b7 \u0141agodna, uspokajaj\u0105ca, bezpiecze\u0144stwo na pierwszym miejscu',
+        // BASIC PROFILE
+        'basic.heading': 'Powiedz nam o sobie',
+        'basic.subtitle': 'To pomo\u017ce nam dok\u0142adnie spersonalizowa\u0107 Tw\u00f3j plan \u017cywieniowy.',
+        'basic.dob': 'Data urodzenia', 'basic.sex': 'P\u0142e\u0107 biologiczna',
+        'basic.weight': 'Waga (kg)', 'basic.height': 'Wzrost (cm)',
+        'basic.goal': 'G\u0142\u00f3wny cel',
+        'sex.male':'M\u0119\u017cczyzna','sex.female':'Kobieta','sex.other':'Inne / Wol\u0119 nie podawa\u0107',
+        'goal.lose_weight':'Schudn\u0105\u0107','goal.gain_muscle':'Zbudowa\u0107 mi\u0119\u015bnie',
+        'goal.eat_healthier':'Je\u015b\u0107 zdrowiej','goal.manage_condition':'Zarz\u0105dza\u0107 stanem zdrowia',
+        'goal.pregnancy':'Wsparcie w ci\u0105\u017cy / po porodzie','goal.energy':'Wi\u0119cej energii',
+        // HEALTH QUESTIONNAIRE
+        'hq.heading': 'Tw\u00f3j profil zdrowotny',
+        'hq.subtitle.pre': 'Te informacje pozwol\u0105',
+        'hq.subtitle.post': 'dostosowa\u0107 zalecenia \u017cywieniowe bezpiecznie i skutecznie. Wszystkie dane s\u0105 prywatne i bezpieczne.',
+        'hq.activity': 'Poziom aktywno\u015bci fizycznej',
+        'act.sedentary':'Siedz\u0105cy tryb \u017cycia','act.sedentary.desc':'Praca biurowa, ma\u0142o lub brak ruchu',
+        'act.lightly_active':'Lekko aktywny/a','act.lightly_active.desc':'Lekki ruch 1\u20133 dni/tyg.',
+        'act.moderately_active':'Umiarkowanie aktywny/a','act.moderately_active.desc':'Umiarkowany ruch 3\u20135 dni/tyg.',
+        'act.very_active':'Bardzo aktywny/a','act.very_active.desc':'Intensywny ruch lub praca fizyczna 6\u20137 dni/tyg.',
+        'hq.conditions': 'Choroby przewlek\u0142e',
+        'cond.diabetes':'Cukrzyca (typ 1 lub 2)','cond.hypertension':'Nadci\u015bnienie t\u0119tnicze',
+        'cond.high_cholesterol':'Wysoki cholesterol','cond.thyroid':'Problemy z tarczyc\u0105',
+        'cond.ibs_ibd':'IBS / IBD','cond.pcos':'PCOS',
+        'cond.none':'\u017badna z powy\u017cszych','cond.other':'Inne',
+        'hq.allergies': 'Alergie i nietolerancje pokarmowe',
+        'allg.gluten':'Gluten / Pszenica','allg.dairy':'Produkty mleczne','allg.eggs':'Jaja',
+        'allg.nuts':'Orzechy','allg.shellfish':'Owoce morza','allg.soy':'Soja',
+        'allg.none':'Brak alergii','allg.other':'Inne',
+        'hq.medications': 'Przyjmowane leki',
+        'hq.meds.help': 'Niekt\u00f3re leki wchodz\u0105 w interakcje ze sk\u0142adnikami od\u017cywczymi \u2014 ta wiedza pomaga nam zadba\u0107 o Twoje bezpiecze\u0144stwo.',
+        'hq.supplements': 'Przyjmowane suplementy',
+        // DIET PREFERENCES
+        'diet.heading': 'Twoje preferencje \u017cywieniowe',
+        'diet.subtitle.post': 'wykorzysta te informacje, aby stworzy\u0107 plan posi\u0142k\u00f3w, kt\u00f3ry naprawd\u0119 Ci odpowiada \u2014 bez potraw, kt\u00f3rych nie lubisz.',
+        'diet.style': 'Styl \u017cywienia',
+        'ds.no_restriction':'Bez ogranicze\u0144','ds.no_restriction.desc':'Jem wszystko',
+        'ds.mediterranean':'\u015ar\u00f3dziemnomorski','ds.mediterranean.desc':'Oliwa, ryby, warzywa, pe\u0142ne ziarna',
+        'ds.vegetarian':'Wegetaria\u0144ski','ds.vegetarian.desc':'Bez mi\u0119sa, ryby s\u0105 ok',
+        'ds.vegan':'Wega\u0144ski','ds.vegan.desc':'Bez produkt\u00f3w zwierz\u0119cych',
+        'ds.pescatarian':'Pescataria\u0144ski','ds.pescatarian.desc':'Ryby i owoce morza, bez innego mi\u0119sa',
+        'ds.keto':'Keto / Niskowęglowodanowy','ds.keto.desc':'Du\u017co t\u0142uszczu, bardzo ma\u0142o w\u0119glowodan\u00f3w',
+        'ds.paleo':'Paleo','ds.paleo.desc':'Pe\u0142nowarto\u015bciowe jedzenie, bez zb\u00f3\u017c i ro\u015blin str\u0105czkowych',
+        'ds.halal':'Halal','ds.halal.desc':'Wy\u0142\u0105cznie \u017cywno\u015b\u0107 certyfikowana halal',
+        'ds.kosher':'Koszerny','ds.kosher.desc':'Prawa \u017cywieniowe koszerne',
+        'diet.meals': 'Liczba posi\u0142k\u00f3w dziennie',
+        'freq.2':'2 posi\u0142ki / dzie\u0144','freq.3':'3 posi\u0142ki / dzie\u0144','freq.4':'4 posi\u0142ki / dzie\u0144',
+        'freq.5':'5+ posi\u0142k\u00f3w / dzie\u0144','freq.if':'Przerywany post (IF)',
+        'diet.cook_time': 'Dost\u0119pny czas na gotowanie (na posi\u0142ek)',
+        'cook.under_15':'Poni\u017cej 15 min','cook.15_30':'15\u201330 min',
+        'cook.30_60':'30\u201360 min','cook.over_60':'Uwielbiam gotowa\u0107',
+        'diet.dislikes': 'Potrawy, kt\u00f3rych nie lubisz lub nie jesz',
+        'diet.dislikes.help': 'Nie pojawi\u0105 si\u0119 w Twoim planie posi\u0142k\u00f3w \u2014 nigdy.',
+        'diet.restrictions': 'Dodatkowe cele \u017cywieniowe',
+        'diet.restrictions.hint': '(opcjonalne \u2014 zaznacz wszystkie pasuj\u0105ce)',
+        'restr.low_sodium':'Ma\u0142o sodu','restr.low_sugar':'Ma\u0142o cukru','restr.low_fat':'Niskot\u0142uszczowy',
+        'restr.high_protein':'Wysokobia\u0142kowy','restr.high_fiber':'Du\u017co b\u0142onnika',
+        'restr.low_fodmap':'Nisko-FODMAP','restr.diabetic':'Przyjazny dla diabetyk\u00f3w','restr.other':'Inne',
+        // LOGIN
+        'login.heading': 'Witamy z powrotem',
+        'login.subtitle': 'Zaloguj si\u0119, aby kontynuowa\u0107 swoj\u0105 podr\u00f3\u017c \u017cywieniow\u0105.',
+        'login.no_account': 'Nie masz konta?',
+        'login.signup_link': 'Zarejestruj si\u0119 bezp\u0142atnie',
+        // SIGNUP
+        'signup.heading': 'Utw\u00f3rz konto',
+        'signup.subtitle': 'Bezp\u0142atny start \u2014 nie wymagamy karty kredytowej.',
+        'signup.confirm_pw': 'Potwierd\u017a has\u0142o',
+        'signup.btn': 'Utw\u00f3rz konto bezp\u0142atnie',
+        'signup.have_account': 'Masz ju\u017c konto?',
+        // FOOD RECALL
+        'recall.heading': 'Co ostatnio jad\u0142a\u015b/-e\u015b?',
+        'recall.subtitle.pre': 'Zapisz swoje posi\u0142ki z ostatnich 1\u20133 dni.',
+        'recall.subtitle.post': 'wykorzysta te dane, aby zidentyfikowa\u0107 luki \u017cywieniowe i stworzy\u0107 Tw\u00f3j spersonalizowany plan. Mo\u017cesz by\u0107 tak dok\u0142adny/a lub og\u00f3lny/a, jak chcesz.',
+        'recall.tip': '\ud83d\udca1 <strong style="color:#5a4015;">Wskaz\u00f3wka:</strong> Je\u015bli znasz porcje, podaj je (np. \u201e2 jajka\u201d, \u201eduża miska owsianki\u201d). Napoje te\u017c si\u0119 licz\u0105 \u2014 kawa, sok, koktajle bia\u0142kowe. Dzie\u0144 1 jest wymagany; dni 2 i 3 poprawiaj\u0105 dok\u0142adno\u015b\u0107.',
+        'recall.day1':'Dzie\u0144 1 \u2014 Dzi\u015b','recall.day2':'Dzie\u0144 2 \u2014 Wczoraj','recall.day3':'Dzie\u0144 3 \u2014 Przedwczoraj',
+        'recall.required':'Wymagane','recall.opt_day':'Opcjonalne \u2014 poprawia dok\u0142adno\u015b\u0107',
+        'recall.breakfast':'\ud83c\udf05 \u015aniadanie','recall.lunch':'\u2600\ufe0f Obiad','recall.dinner':'\ud83c\udf19 Kolacja',
+        'recall.snacks':'\ud83c\udf4e Przek\u0105ski','recall.opt_badge':'opcjonalne',
+        'recall.morning':'Rano','recall.afternoon':'Po\u0142udnie','recall.evening':'Wiecz\u00f3r',
+        'recall.notes':'\ud83d\udcdd Uwagi',
+        'recall.analyse': 'Analizuj moj\u0105 diet\u0119 \u2192',
+        'recall.privacy': 'Twoje dane s\u0105 prywatne i nigdy nieudost\u0119pniane. U\u017cywane wy\u0142\u0105cznie do generowania spersonalizowanego planu \u017cywieniowego.',
+        // PLACEHOLDERS
+        'ph.weight':'np. 68,5','ph.height':'np. 165',
+        'ph.medications':'np. Metformina 500mg, Lewotyroksyna 50mcg\u2026',
+        'ph.supplements':'np. Witamina D 1000 IU, Glicynian magnezu, Omega-3\u2026',
+        'ph.med_other':'np. choroba Le\u015bniowskiego-Crohna, anemia\u2026',
+        'ph.allergy_other':'np. sezam, kiwi\u2026',
+        'ph.food_dislikes':'np. kolendra, w\u0105tr\u00f3bka, pieczarki, ple\u015bniowy ser\u2026',
+        'ph.rest_other':'np. dieta niskoszczawianowa\u2026',
+        'ph.pw':'Co najmniej 8 znak\u00f3w','ph.pw_repeat':'Powt\u00f3rz has\u0142o',
+      }
+    };
+
+    let currentLang = localStorage.getItem('nouri_lang') || 'en';
+
+    function applyLang(lang) {
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      // Swap innerHTML for all data-i18n elements
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const v = t[el.dataset.i18n];
+        if (v !== undefined) el.innerHTML = v;
+      });
+      // Swap placeholder for all data-i18n-placeholder elements
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const v = t[el.dataset.i18nPlaceholder];
+        if (v !== undefined) el.placeholder = v;
+      });
+      const btn = document.getElementById('lang-toggle');
+      if (btn) btn.textContent = lang === 'en' ? 'EN / PL' : 'PL / EN';
+      document.documentElement.lang = lang;
+    }
+
+    function toggleLang() {
+      currentLang = currentLang === 'en' ? 'pl' : 'en';
+      localStorage.setItem('nouri_lang', currentLang);
+      applyLang(currentLang);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => applyLang(currentLang));
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

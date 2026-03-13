@@ -1,0 +1,91 @@
+{% if meal %}
+{% with day_str=day.day_number|stringformat:"s" %}
+{% with card_id=key|add:"-d"|add:day_str %}
+<div class="meal-card {% if 'snack' in key %}snack{% endif %}">
+
+  <!-- Header -->
+  <div class="meal-header" onclick="toggleMeal('{{ card_id }}')">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:20px;">
+        {% if key == 'breakfast'        %}🌅
+        {% elif key == 'morning_snack'  %}🍎
+        {% elif key == 'lunch'          %}☀️
+        {% elif key == 'afternoon_snack'%}🥜
+        {% elif key == 'dinner'         %}🌙
+        {% endif %}
+      </span>
+      <div>
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase;
+                    color:#8a9a94; margin-bottom:2px;">
+          {% if key == 'breakfast'        %}Breakfast
+          {% elif key == 'morning_snack'  %}Morning Snack
+          {% elif key == 'lunch'          %}Lunch
+          {% elif key == 'afternoon_snack'%}Afternoon Snack
+          {% elif key == 'dinner'         %}Dinner
+          {% endif %}
+        </div>
+        <div style="font-size:15px; font-weight:600; color:#0D1117;">{{ meal.name }}</div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      {% if meal.calories %}
+      <span style="font-size:12px; color:#8a6a20; font-weight:600;">{{ meal.calories }} kcal</span>
+      {% endif %}
+      {% if meal.prep_time_min %}
+      <span style="font-size:11px; color:#8a9a94;">⏱ {{ meal.prep_time_min }}min</span>
+      {% endif %}
+      <span class="meal-chevron" id="meal-chev-{{ card_id }}">▼</span>
+    </div>
+  </div>
+
+  <!-- Body (expandable) -->
+  <div class="meal-body" id="meal-body-{{ card_id }}">
+
+    {% if meal.description %}
+    <p style="font-size:13px; color:#5a6a64; line-height:1.6; margin:0 0 12px;">{{ meal.description }}</p>
+    {% endif %}
+
+    <!-- Macros -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+      {% if meal.calories  %}<span class="macro-pill pill-cal">🔥 {{ meal.calories }} kcal</span>{% endif %}
+      {% if meal.protein_g %}<span class="macro-pill pill-prot">P {{ meal.protein_g }}g</span>{% endif %}
+      {% if meal.carbs_g   %}<span class="macro-pill pill-carb">C {{ meal.carbs_g }}g</span>{% endif %}
+      {% if meal.fat_g     %}<span class="macro-pill pill-fat">F {{ meal.fat_g }}g</span>{% endif %}
+    </div>
+
+    <!-- Tags -->
+    {% if meal.tags %}
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
+      {% for tag in meal.tags %}
+      <span class="meal-tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Ingredients -->
+    {% if meal.ingredients %}
+    <div style="margin-bottom:14px;">
+      <p style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase;
+                color:#1B4D3E; margin-bottom:8px;">Ingredients</p>
+      <ul class="ingredient-list">
+        {% for ing in meal.ingredients %}
+        <li>{{ ing }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Instructions -->
+    {% if meal.instructions %}
+    <div>
+      <p style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase;
+                color:#1B4D3E; margin-bottom:8px;">Instructions</p>
+      <p style="font-size:13px; color:#3a4a44; line-height:1.7; margin:0;">{{ meal.instructions }}</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endwith %}
+{% endwith %}
+{% endif %}

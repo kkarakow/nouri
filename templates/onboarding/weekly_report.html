@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% block title %}Weekly Report — Nouri{% endblock %}
+
+{% block extra_head %}
+<style>
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+    color: #1B4D3E; opacity: 0.55; margin-bottom: 14px;
+  }
+
+  /* Score circle */
+  .score-ring {
+    width: 120px; height: 120px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; position: relative;
+  }
+  .score-inner {
+    width: 88px; height: 88px; border-radius: 50%; background: rgba(255,255,255,0.95);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+
+  /* Win card */
+  .win-card {
+    flex: 1; min-width: 180px; padding: 16px;
+    background: rgba(0,168,120,0.05); border-radius: 14px;
+    border: 1.5px solid rgba(0,168,120,0.15);
+  }
+
+  /* Nutrient row */
+  .nutrient-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid rgba(27,77,62,0.07);
+  }
+  .nutrient-row:last-child { border-bottom: none; }
+  .nt-bar-track { flex: 1; height: 5px; border-radius: 100px; background: rgba(27,77,62,0.1); }
+  .nt-bar-fill  { height: 100%; border-radius: 100px; }
+  .nt-on_track  { background: #00A878; }
+  .nt-low       { background: #C9A84C; }
+  .nt-high      { background: #e07b39; }
+
+  /* Focus card */
+  .focus-card {
+    border-left: 4px solid #C9A84C; border-radius: 14px; padding: 20px 22px;
+    background: rgba(201,168,76,0.07); border: 1.5px solid rgba(201,168,76,0.3);
+    border-left-width: 4px;
+  }
+
+  /* Lock overlay */
+  .premium-blur { filter: blur(3px); pointer-events: none; user-select: none; opacity: 0.5; }
+
+  /* Persona closing */
+  .closing-card {
+    background: rgba(27,77,62,0.04); border-radius: 14px; padding: 20px 22px;
+    border: 1px solid rgba(27,77,62,0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center px-4 py-10">
+<div style="width:100%; max-width:720px;">
+
+  {% if is_demo_preview %}
+  <!-- ── Premium Preview banner ── -->
+  <div style="margin-bottom:16px; padding:11px 18px; border-radius:12px;
+              background:rgba(201,168,76,0.10); border:1.5px solid rgba(201,168,76,0.35);
+              display:flex; align-items:center; gap:10px;">
+    <span style="color:#C9A84C; font-size:15px; flex-shrink:0;">✦</span>
+    <span style="font-size:13px; color:#8a6a20; font-weight:500;">
+      Premium Preview — this feature will require a subscription
+    </span>
+  </div>
+  {% endif %}
+
+  {% if request.GET.error %}
+  <div class="glass p-8 text-center" style="margin-bottom:16px;">
+    <div style="font-size:48px; margin-bottom:12px;">⚠️</div>
+    <h2 style="font-family:'Cormorant Garamond',serif; font-size:26px; color:#1B4D3E; margin-bottom:10px;">
+      Couldn't generate report
+    </h2>
+    <p style="font-size:14px; color:#5a6a64; margin-bottom:20px;">Something went wrong. Please try again.</p>
+    <a href="/onboarding/weekly-report/generate/" class="btn-primary">Try Again</a>
+  </div>
+  {% endif %}
+
+  {% if not report %}
+  <!-- Empty state -->
+  <div class="glass p-10 text-center">
+    <div style="font-size:56px; margin-bottom:16px;">📈</div>
+    <h2 style="font-family:'Cormorant Garamond',serif; font-size:30px; color:#1B4D3E; margin-bottom:10px;">
+      No report yet
+    </h2>
+    <p style="font-size:14px; color:#5a6a64; margin-bottom:24px; line-height:1.6; max-width:360px; margin-left:auto; margin-right:auto;">
+      {{ persona_name }} will review your week and write a personalised progress report.
+    </p>
+    <a href="/onboarding/weekly-report/generate/" class="btn-mint">Generate My First Report →</a>
+  </div>
+
+  {% else %}
+
+  <!-- ── Header ── -->
+  <div class="glass p-8 md:p-10" style="margin-bottom:16px;">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+      <div>
+        <p style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+                  color:#C9A84C; margin-bottom:6px;">
+          {{ report.week_start|date:"F j" }} — {{ report.week_end|date:"F j, Y" }}
+        </p>
+        <h2 style="font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:400;
+                   color:#1B4D3E; margin-bottom:4px; line-height:1.2;">
+          {{ report.headline }}
+        </h2>
+        <p style="font-size:12px; color:#8a9a94;">
+          Reviewed by <strong style="color:#1B4D3E;">{{ persona_name }}</strong>
+        </p>
+      </div>
+      <a href="/onboarding/weekly-report/generate/" class="btn-ghost" style="font-size:13px; white-space:nowrap; flex-shrink:0;">
+        ↻ Regenerate
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Adherence Score ── -->
+  <div class="glass p-6 md:p-8" style="margin-bottom:16px;">
+    <p class="section-label">Meal Plan Adherence</p>
+    <div style="display:flex; align-items:center; gap:28px; flex-wrap:wrap;">
+
+      <!-- Circle -->
+      {% with score=report.adherence_score %}
+      <div class="score-ring"
+           style="background: conic-gradient(
+             {% if score >= 75 %}#00A878{% elif score >= 50 %}#C9A84C{% else %}#c0392b{% endif %}
+             calc({{ score }}% * 3.6deg), rgba(27,77,62,0.1) 0deg);">
+        <div class="score-inner">
+          <span style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:600;
+                       color:{% if score >= 75 %}#00A878{% elif score >= 50 %}#C9A84C{% else %}#c0392b{% endif %}; line-height:1;">
+            {{ score }}%
+          </span>
+          <span style="font-size:10px; font-weight:600; color:#8a9a94; letter-spacing:0.04em; text-transform:uppercase;">score</span>
+        </div>
+      </div>
+      {% endwith %}
+
+      <div>
+        <div style="font-size:15px; font-weight:600; color:#1B4D3E; margin-bottom:6px;">
+          {{ report.meals_followed }} of {{ report.total_meals }} meals followed
+        </div>
+        <div style="font-size:13px; color:#5a6a64; line-height:1.5;">
+          {% if report.adherence_score >= 75 %}
+            Great consistency this week! Keep up the strong work.
+          {% elif report.adherence_score >= 50 %}
+            Solid effort — a few more tracked meals next week will push this higher.
+          {% else %}
+            This week was tough. Every meal you track is progress — let's build from here.
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── What Went Well ── -->
+  {% if report.wins %}
+  <div class="glass p-6 md:p-8" style="margin-bottom:16px;">
+    <p class="section-label">What Went Well</p>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      {% for win in report.wins %}
+      <div class="win-card">
+        <div style="font-size:20px; margin-bottom:8px;">✅</div>
+        <div style="font-size:14px; font-weight:600; color:#1B4D3E; margin-bottom:4px;">{{ win.title }}</div>
+        <div style="font-size:13px; color:#5a6a64; line-height:1.5;">{{ win.detail }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Nutrient Summary (premium) ── -->
+  {% if report.nutrient_summary %}
+  <div class="glass p-6 md:p-8" style="margin-bottom:16px; position:relative; overflow:hidden;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <p class="section-label" style="margin-bottom:0;">Avg Daily Nutrients vs Target</p>
+      {% if not is_premium %}
+      <span style="font-size:11px; color:#C9A84C; font-weight:600;">🔒 Premium</span>
+      {% endif %}
+    </div>
+
+    <div class="{% if not is_premium %}premium-blur{% endif %}">
+      {% for n in report.nutrient_summary %}
+      <div class="nutrient-row">
+        <span style="font-size:13px; color:#1B4D3E; min-width:100px; font-weight:500;">{{ n.name }}</span>
+        <div class="nt-bar-track">
+          {% with pct=n.avg_daily|default:0 %}
+          <div class="nt-bar-fill nt-{{ n.status }}"
+               style="width:{% if n.target and n.target > 0 %}{% widthratio n.avg_daily n.target 100 %}{% else %}0{% endif %}%;
+                      max-width:100%;"></div>
+          {% endwith %}
+        </div>
+        <span style="font-size:12px; color:#5a6a64; min-width:80px; text-align:right;">
+          {{ n.avg_daily }} / {{ n.target }} {{ n.unit }}
+        </span>
+        <span style="font-size:13px; flex-shrink:0;">
+          {% if n.status == 'on_track' %}✅{% elif n.status == 'low' %}⬇️{% else %}⬆️{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if not is_premium %}
+    <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                background:rgba(255,255,255,0.4); border-radius:inherit;">
+      <div style="text-align:center; padding:20px;">
+        <div style="font-size:24px; margin-bottom:8px;">🔒</div>
+        <div style="font-weight:600; color:#1B4D3E; margin-bottom:6px;">Premium feature</div>
+        <a href="#" class="btn-mint" style="font-size:13px;">Unlock Full Report</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── One Focus for Next Week (premium) ── -->
+  {% if report.focus_next_week %}
+  <div style="margin-bottom:16px; position:relative;">
+    <div class="focus-card {% if not is_premium %}premium-blur{% endif %}">
+      <p class="section-label">One Focus for Next Week</p>
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:400;
+                 color:#1B4D3E; margin-bottom:8px;">
+        {{ report.focus_next_week.title }}
+      </h3>
+      <p style="font-size:14px; color:#3a4a44; line-height:1.6; margin-bottom:10px;">
+        {{ report.focus_next_week.description }}
+      </p>
+      <p style="font-size:12px; color:#7a6030; font-style:italic; margin:0;">
+        💡 {{ report.focus_next_week.why }}
+      </p>
+    </div>
+
+    {% if not is_premium %}
+    <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                background:rgba(255,255,255,0.5); border-radius:14px;">
+      <div style="text-align:center; padding:20px;">
+        <div style="font-size:24px; margin-bottom:8px;">🔒</div>
+        <div style="font-weight:600; color:#1B4D3E; margin-bottom:6px;">Unlock your weekly focus</div>
+        <a href="#" class="btn-mint" style="font-size:13px;">Upgrade to Premium</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── Persona Closing ── -->
+  {% if report.persona_closing %}
+  <div class="closing-card" style="margin-bottom:16px;">
+    <div style="display:flex; gap:14px; align-items:flex-start;">
+      <div style="width:40px; height:40px; border-radius:50%; background:#1B4D3E; flex-shrink:0;
+                  display:flex; align-items:center; justify-content:center; font-size:18px; margin-top:2px;">
+        {% if profile.persona == 'sarah' %}👩‍⚕️{% elif profile.persona == 'maya' %}🏋️‍♀️{% else %}🤱{% endif %}
+      </div>
+      <div>
+        <div style="font-size:12px; font-weight:600; color:#1B4D3E; margin-bottom:6px;">{{ persona_name }}</div>
+        <p style="font-size:14px; color:#3a4a44; line-height:1.7; font-style:italic; margin:0;">
+          "{{ report.persona_closing }}"
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Upgrade CTA ── -->
+  {% if not is_premium %}
+  <div style="background:linear-gradient(135deg,rgba(27,77,62,0.06),rgba(201,168,76,0.08));
+              border:1.5px solid rgba(201,168,76,0.3); border-radius:16px; padding:24px 24px;
+              margin-bottom:16px; text-align:center;">
+    <div style="font-size:28px; margin-bottom:10px;">✨</div>
+    <h3 style="font-family:'Cormorant Garamond',serif; font-size:22px; color:#1B4D3E; margin-bottom:8px;">
+      Unlock your full weekly report
+    </h3>
+    <p style="font-size:13px; color:#5a6a64; margin-bottom:16px; line-height:1.6;">
+      Premium includes nutrient tracking, your weekly focus, trend graphs, and PDF export.
+    </p>
+    <a href="#" class="btn-mint">Upgrade to Premium →</a>
+  </div>
+  {% elif is_demo_preview %}
+  <div style="background:linear-gradient(135deg,rgba(27,77,62,0.06),rgba(201,168,76,0.08));
+              border:1.5px dashed rgba(201,168,76,0.4); border-radius:16px; padding:20px 24px;
+              margin-bottom:16px; text-align:center; opacity:0.7;">
+    <div style="font-size:20px; margin-bottom:8px;">✨</div>
+    <p style="font-size:13px; color:#8a6a20; margin-bottom:12px; font-weight:500;">
+      Upgrade to Premium — coming soon
+    </p>
+    <a href="#" class="btn-ghost" style="font-size:12px; opacity:0.6; cursor:default; pointer-events:none;">
+      Upgrade to Premium →
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- ── Footer actions ── -->
+  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <a href="/dashboard/" class="btn-ghost">← Dashboard</a>
+    <a href="/onboarding/meal-plan/" class="btn-primary">View My Meal Plan →</a>
+    {% if is_premium %}
+    <a href="#" class="btn-ghost" style="opacity:0.6; cursor:not-allowed;">📄 Download PDF (soon)</a>
+    {% endif %}
+  </div>
+
+  {% endif %}{# end no report #}
+</div>
+</div>
+{% endblock %}

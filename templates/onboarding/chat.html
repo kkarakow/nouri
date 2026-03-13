@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block title %}Chat with {{ persona_name }} — Nouri{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Full-height chat layout */
+  .chat-wrap {
+    display: flex; flex-direction: column;
+    height: calc(100vh - 72px);
+    max-width: 720px; margin: 0 auto; padding: 0 16px 16px;
+  }
+
+  /* Header */
+  .chat-header {
+    flex-shrink: 0; padding: 16px 0 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(27,77,62,0.1);
+  }
+
+  /* Messages area */
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 20px 0 8px;
+    display: flex; flex-direction: column; gap: 14px;
+    scrollbar-width: thin; scrollbar-color: rgba(27,77,62,0.15) transparent;
+  }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: rgba(27,77,62,0.15); border-radius: 4px; }
+
+  /* Message bubbles */
+  .msg-row {
+    display: flex; gap: 10px; align-items: flex-end;
+  }
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600;
+  }
+  .avatar-ai  { background: #1B4D3E; color: #fff; font-size: 13px; }
+  .avatar-user { background: rgba(0,168,120,0.15); color: #006b4f; font-size: 13px; }
+
+  .bubble {
+    max-width: 78%; padding: 11px 15px; border-radius: 18px;
+    font-size: 14px; line-height: 1.6; color: #0D1117;
+  }
+  .bubble-ai {
+    background: rgba(255,255,255,0.75); border: 1.5px solid rgba(27,77,62,0.1);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble-user {
+    background: #1B4D3E; color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* Food log badge */
+  .food-log-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    background: rgba(201,168,76,0.12); color: #8a6a20; border-radius: 100px;
+    padding: 3px 9px; margin-bottom: 6px;
+  }
+  .food-log-card {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);
+  }
+
+  /* Typing indicator */
+  .typing-dots { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .typing-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #8a9a94;
+    animation: typing-bounce 1.2s ease infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* Input area */
+  .chat-input-wrap {
+    flex-shrink: 0; padding-top: 12px;
+    border-top: 1px solid rgba(27,77,62,0.1);
+  }
+  .chat-form {
+    display: flex; gap: 10px; align-items: flex-end;
+    background: rgba(255,255,255,0.7); border-radius: 18px;
+    border: 1.5px solid rgba(27,77,62,0.15); padding: 8px 8px 8px 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .chat-form:focus-within {
+    border-color: #00A878; box-shadow: 0 0 0 3px rgba(0,168,120,0.1);
+  }
+  .chat-textarea {
+    flex: 1; border: none; background: transparent; outline: none; resize: none;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: #0D1117;
+    line-height: 1.5; max-height: 120px; min-height: 24px;
+  }
+  .chat-textarea::placeholder { color: #aab8b3; }
+  .send-btn {
+    width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+    background: #1B4D3E; color: #fff; font-size: 16px; display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+    transition: background 0.18s, transform 0.1s;
+  }
+  .send-btn:hover { background: #00A878; }
+  .send-btn:active { transform: scale(0.93); }
+  .send-btn:disabled { background: rgba(27,77,62,0.25); cursor: not-allowed; }
+
+  /* Empty state */
+  .chat-empty {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; padding: 32px 20px;
+  }
+
+  /* Limit bar */
+  .limit-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0 10px; font-size: 11px; color: #8a9a94;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-wrap">
+
+  <!-- ── Header ── -->
+  <div class="chat-header">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:#1B4D3E;
+                  display:flex; align-items:center; justify-content:center; font-size:18px;">
+        {% if profile.persona == 'sarah' %}👩‍⚕️
+        {% elif profile.persona == 'maya' %}🏋️‍♀️
+        {% elif profile.persona == 'lena' %}🤱
+        {% else %}👩‍⚕️{% endif %}
+      </div>
+      <div>
+        <div style="font-weight:600; font-size:15px; color:#0D1117;">{{ persona_name }}</div>
+        <div style="font-size:11px; color:#00A878; font-weight:600;">● Online</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <a href="/onboarding/analysis/results/" style="font-size:12px; color:#5a6a64; text-decoration:none;">📊 Analysis</a>
+      <a href="/onboarding/meal-plan/" style="font-size:12px; color:#5a6a64; text-decoration:none;">🗓️ Meal Plan</a>
+    </div>
+  </div>
+
+  <!-- ── Messages ── -->
+  <div class="chat-messages" id="chat-messages">
+
+    {% if not messages %}
+    <div class="chat-empty">
+      <div style="font-size:48px; margin-bottom:16px;">
+        {% if profile.persona == 'sarah' %}👩‍⚕️
+        {% elif profile.persona == 'maya' %}🏋️‍♀️
+        {% elif profile.persona == 'lena' %}🤱
+        {% else %}👩‍⚕️{% endif %}
+      </div>
+      <h3 style="font-family:'Cormorant Garamond',serif; font-size:22px; color:#1B4D3E; margin-bottom:8px;">
+        Hi, I'm {{ persona_name }}
+      </h3>
+      <p style="font-size:14px; color:#5a6a64; max-width:320px; line-height:1.6; margin-bottom:20px;">
+        {% if profile.persona == 'sarah' %}
+          Ask me anything about your nutrition, food choices, or how to reach your goals. You can also log meals by just telling me what you ate.
+        {% elif profile.persona == 'maya' %}
+          Ready to optimise your fueling? Ask me about macros, meal timing, or log your meals by telling me what you ate.
+        {% else %}
+          I'm here to support you through every step. Ask me about your nutrition needs, safe foods, or just tell me what you've been eating.
+        {% endif %}
+      </p>
+      <!-- Suggested questions -->
+      <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:380px;">
+        <button class="suggestion-btn" onclick="setSuggestion(this)">
+          💬 What should I focus on this week?
+        </button>
+        <button class="suggestion-btn" onclick="setSuggestion(this)">
+          🍽️ I just had breakfast — can you log it?
+        </button>
+        <button class="suggestion-btn" onclick="setSuggestion(this)">
+          📊 Explain my biggest nutritional gap
+        </button>
+      </div>
+    </div>
+    {% else %}
+      {% for msg in messages %}
+        {% if msg.role == 'user' %}
+        <div class="msg-row user">
+          <div class="avatar avatar-user">You</div>
+          <div class="bubble bubble-user">{{ msg.content }}</div>
+        </div>
+        {% else %}
+        {% comment %}Parse display text{% endcomment %}
+        <div class="msg-row">
+          <div class="avatar avatar-ai">
+            {% if profile.persona == 'sarah' %}Dr.S
+            {% elif profile.persona == 'maya' %}Maya
+            {% else %}Dr.L{% endif %}
+          </div>
+          <div>
+            {% if msg.is_food_log %}
+            <div class="food-log-badge">🍽️ Food Logged</div>
+            {% endif %}
+            <div class="bubble bubble-ai">{{ msg.content }}</div>
+            {% if msg.meal_data %}
+            <div class="food-log-card">
+              <div style="font-size:12px; font-weight:600; color:#5a3a10; margin-bottom:4px;">
+                {{ msg.meal_data.description }}
+              </div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                {% if msg.meal_data.estimated_calories %}<span style="font-size:11px; color:#8a6a20;">🔥 {{ msg.meal_data.estimated_calories }} kcal</span>{% endif %}
+                {% if msg.meal_data.protein_g %}<span style="font-size:11px; color:#006b4f;">P {{ msg.meal_data.protein_g }}g</span>{% endif %}
+                {% if msg.meal_data.carbs_g %}<span style="font-size:11px; color:#3a45a0;">C {{ msg.meal_data.carbs_g }}g</span>{% endif %}
+                {% if msg.meal_data.fat_g %}<span style="font-size:11px; color:#a05020;">F {{ msg.meal_data.fat_g }}g</span>{% endif %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+  </div>
+
+  <!-- ── Input ── -->
+  <div class="chat-input-wrap">
+    {% if not is_premium %}
+    <div class="limit-bar">
+      <span>{{ remaining }} messages remaining today</span>
+      <a href="#" style="color:#C9A84C; font-weight:600; text-decoration:none; font-size:11px;">Upgrade for unlimited ↗</a>
+    </div>
+    {% endif %}
+
+    <form class="chat-form" id="chat-form"
+          hx-post="/onboarding/chat/send/"
+          hx-target="#chat-messages"
+          hx-swap="beforeend"
+          hx-on::after-request="afterSend(this)"
+          hx-indicator="#typing-indicator">
+      {% csrf_token %}
+      <textarea class="chat-textarea" name="message" id="chat-input"
+                placeholder="Ask {{ persona_name }} anything, or tell me what you ate…"
+                rows="1"
+                onkeydown="handleEnter(event, this)"
+                oninput="autoResize(this)"></textarea>
+      <button type="submit" class="send-btn" id="send-btn">➤</button>
+    </form>
+
+    <!-- Typing indicator (shown while HTMX request is in flight) -->
+    <div id="typing-indicator" style="display:none; padding:8px 0 0 52px;">
+      <div class="bubble bubble-ai" style="display:inline-block; padding:10px 16px;">
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+  .suggestion-btn {
+    background: rgba(255,255,255,0.6); border: 1.5px solid rgba(27,77,62,0.12);
+    border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #1B4D3E;
+    cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .suggestion-btn:hover { background: rgba(0,168,120,0.07); border-color: rgba(0,168,120,0.3); }
+  .htmx-request #send-btn { opacity: 0.5; pointer-events: none; }
+  .htmx-request #typing-indicator { display: block !important; }
+</style>
+<script>
+  function scrollToBottom() {
+    const el = document.getElementById('chat-messages');
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleEnter(e, el) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('chat-form').requestSubmit();
+    }
+  }
+
+  function setSuggestion(btn) {
+    const input = document.getElementById('chat-input');
+    input.value = btn.textContent.trim().replace(/^[^\s]+\s/, '');
+    input.focus();
+    autoResize(input);
+    // Hide empty state
+    btn.closest('.chat-empty')?.remove();
+  }
+
+  function afterSend(form) {
+    form.reset();
+    const input = document.getElementById('chat-input');
+    if (input) { input.style.height = 'auto'; }
+    // Hide empty state if present
+    document.querySelector('.chat-empty')?.remove();
+    scrollToBottom();
+  }
+
+  // Scroll to bottom on load
+  document.addEventListener('DOMContentLoaded', scrollToBottom);
+  // Scroll after each HTMX swap
+  document.body.addEventListener('htmx:afterSwap', scrollToBottom);
+</script>
+{% endblock %}

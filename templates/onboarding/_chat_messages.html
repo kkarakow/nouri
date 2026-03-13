@@ -1,0 +1,66 @@
+<!-- User message -->
+<div class="msg-row user">
+  <div class="avatar avatar-user">You</div>
+  <div class="bubble bubble-user">{{ user_msg.content }}</div>
+</div>
+
+<!-- AI message -->
+<div class="msg-row">
+  <div class="avatar avatar-ai" style="font-size:11px;">
+    {% if 'Sarah' in persona_name %}Dr.S
+    {% elif 'Maya' in persona_name %}Maya
+    {% else %}Dr.L{% endif %}
+  </div>
+  <div style="max-width:78%;">
+    <div class="bubble bubble-ai">{{ display_text }}</div>
+
+    {% if is_food_log and meal_data %}
+    <!-- Separate gold food log card -->
+    <div style="margin-top:8px; padding:12px 14px; border-radius:12px;
+                background:rgba(201,168,76,0.08); border:1.5px solid rgba(201,168,76,0.35);">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+        <span style="font-size:13px;">🍽️</span>
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#8a6a20;">
+          Logged
+        </span>
+      </div>
+      <div style="font-size:13px; font-weight:600; color:#5a3a10; margin-bottom:6px;">
+        {{ meal_data.description }}
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        {% if meal_data.estimated_calories %}
+        <span style="font-size:12px; font-weight:600; color:#8a6a20;">🔥 {{ meal_data.estimated_calories }} kcal</span>
+        {% endif %}
+        {% if meal_data.protein_g %}
+        <span style="font-size:12px; color:#006b4f; font-weight:500;">P {{ meal_data.protein_g }}g</span>
+        {% endif %}
+        {% if meal_data.carbs_g %}
+        <span style="font-size:12px; color:#3a45a0; font-weight:500;">C {{ meal_data.carbs_g }}g</span>
+        {% endif %}
+        {% if meal_data.fat_g %}
+        <span style="font-size:12px; color:#a05020; font-weight:500;">F {{ meal_data.fat_g }}g</span>
+        {% endif %}
+      </div>
+      {% if meal_data.notes %}
+      <div style="font-size:11px; color:#7a6030; font-style:italic; margin-top:5px;">{{ meal_data.notes }}</div>
+      {% endif %}
+      {% if meal_updated %}
+      <div style="font-size:11px; color:#00A878; font-weight:600; margin-top:6px;">
+        ✓ Meal plan updated for today
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- Update remaining count for free users -->
+{% if remaining < 999 %}
+<script>
+  (function() {
+    const bar = document.querySelector('.limit-bar span');
+    if (bar) bar.textContent = '{{ remaining }} messages remaining today';
+  })();
+</script>
+{% endif %}

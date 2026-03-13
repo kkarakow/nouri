@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Basic Profile — Nouri{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center px-4 py-12">
+
+  <!-- Progress -->
+  <div style="width:100%; max-width:500px; margin-bottom:32px;">
+    <div class="flex justify-between mb-2" style="font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#1B4D3E; opacity:0.6;">
+      <span data-i18n="prog.step2">Step 2 of 5</span><span data-i18n="prog.about">About You</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:40%;"></div></div>
+  </div>
+
+  <div class="glass p-8 md:p-10 max-w-lg w-full">
+    <h2 data-i18n="basic.heading"
+        style="font-family:'Cormorant Garamond',serif; font-size:34px; font-weight:400; color:#1B4D3E; margin-bottom:6px;">
+      Tell us about yourself
+    </h2>
+    <p data-i18n="basic.subtitle" style="font-size:14px; color:#5a6a64; margin-bottom:28px;">
+      This helps us personalize your nutrition plan accurately.
+    </p>
+
+    <form method="post" action="/onboarding/basic-profile/">
+      {% csrf_token %}
+      <div style="display:flex; flex-direction:column; gap:20px;">
+
+        <!-- Date of birth -->
+        <div>
+          <label data-i18n="basic.dob" class="nouri-label" for="dob">Date of Birth</label>
+          <input class="nouri-input" type="date" name="date_of_birth" id="dob"
+                 value="{{ profile.date_of_birth|default:'' }}">
+        </div>
+
+        <!-- Biological sex -->
+        <div>
+          <label data-i18n="basic.sex" class="nouri-label">Biological Sex</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            {% for val, label in sex_choices %}
+              <div class="radio-card" style="flex:1; min-width:120px;">
+                <input type="radio" name="biological_sex" id="sex_{{ val }}" value="{{ val }}"
+                       {% if profile.biological_sex == val %}checked{% endif %}>
+                <label for="sex_{{ val }}" style="justify-content:center;">
+                  <div class="radio-dot"></div>
+                  <span data-i18n="sex.{{ val }}" style="font-size:14px;">{{ label }}</span>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Weight & Height -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div>
+            <label data-i18n="basic.weight" class="nouri-label" for="weight">Weight (kg)</label>
+            <input class="nouri-input" type="number" step="0.1" min="30" max="300"
+                   name="weight_kg" id="weight"
+                   data-i18n-placeholder="ph.weight" placeholder="e.g. 68.5"
+                   value="{{ profile.weight_kg|default:'' }}">
+          </div>
+          <div>
+            <label data-i18n="basic.height" class="nouri-label" for="height">Height (cm)</label>
+            <input class="nouri-input" type="number" step="0.1" min="100" max="250"
+                   name="height_cm" id="height"
+                   data-i18n-placeholder="ph.height" placeholder="e.g. 165"
+                   value="{{ profile.height_cm|default:'' }}">
+          </div>
+        </div>
+
+        <!-- Goal -->
+        <div>
+          <label data-i18n="basic.goal" class="nouri-label">Primary Goal</label>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for val, label in goal_choices %}
+              <div class="radio-card">
+                <input type="radio" name="goal" id="goal_{{ val }}" value="{{ val }}"
+                       {% if profile.goal == val %}checked{% endif %}>
+                <label for="goal_{{ val }}">
+                  <div class="radio-dot"></div>
+                  <span data-i18n="goal.{{ val }}" style="font-size:14px;">{{ label }}</span>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+
+      {% if error %}
+        <p style="color:#c0392b; font-size:13px; margin-top:12px;">{{ error }}</p>
+      {% endif %}
+
+      <div style="display:flex; gap:12px; margin-top:28px;">
+        <a href="/onboarding/persona/" data-i18n="btn.back" class="btn-ghost" style="flex:1; text-align:center;">← Back</a>
+        <button type="submit" data-i18n="btn.continue" class="btn-primary" style="flex:2;">Continue →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

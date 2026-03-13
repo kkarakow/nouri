@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Create Account — Nouri{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-screen px-4" style="margin-top:-72px; padding-top:72px;">
+  <div class="glass p-10 max-w-md w-full">
+    <h2 data-i18n="signup.heading"
+        style="font-family:'Cormorant Garamond',serif; font-size:36px; font-weight:400; color:#1B4D3E; margin-bottom:6px;">
+      Create your account
+    </h2>
+    <p data-i18n="signup.subtitle" style="font-size:14px; color:#5a6a64; margin-bottom:28px;">
+      Free to start — no credit card required.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <label data-i18n="form.email" class="nouri-label" for="id_email">Email</label>
+          <input class="nouri-input" type="email" name="email" id="id_email"
+                 placeholder="you@example.com" autocomplete="email" required
+                 value="{{ form.email.value|default:'' }}">
+          {% if form.email.errors %}
+            <p style="color:#c0392b; font-size:12px; margin-top:4px;">{{ form.email.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+        <div>
+          <label data-i18n="form.password" class="nouri-label" for="id_password1">Password</label>
+          <input class="nouri-input" type="password" name="password1" id="id_password1"
+                 data-i18n-placeholder="ph.pw" placeholder="At least 8 characters"
+                 autocomplete="new-password" required>
+          {% if form.password1.errors %}
+            <p style="color:#c0392b; font-size:12px; margin-top:4px;">{{ form.password1.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+        <div>
+          <label data-i18n="signup.confirm_pw" class="nouri-label" for="id_password2">Confirm Password</label>
+          <input class="nouri-input" type="password" name="password2" id="id_password2"
+                 data-i18n-placeholder="ph.pw_repeat" placeholder="Repeat password"
+                 autocomplete="new-password" required>
+          {% if form.password2.errors %}
+            <p style="color:#c0392b; font-size:12px; margin-top:4px;">{{ form.password2.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <p style="color:#c0392b; font-size:13px; margin-top:12px; padding:10px 14px;
+                  background:rgba(192,57,43,0.08); border-radius:8px;">
+          {{ form.non_field_errors|join:" " }}
+        </p>
+      {% endif %}
+
+      <button type="submit" data-i18n="signup.btn" class="btn-mint" style="width:100%; margin-top:24px;">
+        Create Account Free
+      </button>
+    </form>
+
+    <p style="text-align:center; font-size:13px; color:#6b7c76; margin-top:20px;">
+      <span data-i18n="signup.have_account">Already have an account?</span>
+      <a href="/accounts/login/" data-i18n="nav.signin"
+         style="color:#00A878; font-weight:500; text-decoration:none;">Sign In</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

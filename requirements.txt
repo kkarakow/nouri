@@ -1,0 +1,8 @@
+django>=5.2
+djangorestframework>=3.16
+django-allauth>=65.0
+psycopg2-binary>=2.9
+python-decouple>=3.8
+pillow>=10.0
+whitenoise>=6.0
+anthropic>=0.84

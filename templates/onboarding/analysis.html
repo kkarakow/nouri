@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Analysing Your Diet — Nouri{% endblock %}
+
+{% block extra_head %}
+<style>
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.85); opacity: 0.7; }
+    50%  { transform: scale(1.1);  opacity: 0.3; }
+    100% { transform: scale(0.85); opacity: 0.7; }
+  }
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .pulse-ring { animation: pulse-ring 2.2s ease-in-out infinite; }
+  .spin-slow  { animation: spin-slow 3s linear infinite; }
+  .step-item  { animation: fade-in-up 0.5s ease both; }
+  .step-item:nth-child(1) { animation-delay: 0.2s; }
+  .step-item:nth-child(2) { animation-delay: 0.5s; }
+  .step-item:nth-child(3) { animation-delay: 0.8s; }
+  .step-item:nth-child(4) { animation-delay: 1.1s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-screen px-4" style="margin-top:-72px; padding-top:72px;">
+  <div class="glass p-10 max-w-md w-full text-center">
+
+    <!-- Animated icon -->
+    <div style="position:relative; width:96px; height:96px; margin:0 auto 28px;">
+      <div class="pulse-ring" style="position:absolute; inset:0; border-radius:50%;
+           border: 3px solid rgba(0,168,120,0.35);"></div>
+      <div class="spin-slow" style="position:absolute; inset:6px; border-radius:50%;
+           border: 3px solid transparent; border-top-color: #00A878;"></div>
+      <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+           font-size:36px;">🔬</div>
+    </div>
+
+    <h2 style="font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:400;
+               color:#1B4D3E; margin-bottom:10px;">
+      Analysing your diet…
+    </h2>
+    <p style="font-size:14px; color:#5a6a64; line-height:1.6; margin-bottom:28px;">
+      <strong style="color:#1B4D3E;">{{ persona_name }}</strong> is reviewing your food recall
+      and calculating your 47-nutrient profile. This usually takes 10–20 seconds.
+    </p>
+
+    <!-- Steps -->
+    <div style="display:flex; flex-direction:column; gap:10px; text-align:left; margin-bottom:32px;">
+      <div class="step-item" style="display:flex; align-items:center; gap:12px; padding:10px 14px;
+           background:rgba(0,168,120,0.06); border-radius:10px; border:1px solid rgba(0,168,120,0.15);">
+        <span style="font-size:18px;">📋</span>
+        <span style="font-size:13px; color:#1B4D3E; font-weight:500;">Reading your food entries</span>
+      </div>
+      <div class="step-item" style="display:flex; align-items:center; gap:12px; padding:10px 14px;
+           background:rgba(0,168,120,0.06); border-radius:10px; border:1px solid rgba(0,168,120,0.15);">
+        <span style="font-size:18px;">🔬</span>
+        <span style="font-size:13px; color:#1B4D3E; font-weight:500;">Calculating 47 nutrients</span>
+      </div>
+      <div class="step-item" style="display:flex; align-items:center; gap:12px; padding:10px 14px;
+           background:rgba(0,168,120,0.06); border-radius:10px; border:1px solid rgba(0,168,120,0.15);">
+        <span style="font-size:18px;">⚕️</span>
+        <span style="font-size:13px; color:#1B4D3E; font-weight:500;">Comparing to clinical DRI standards</span>
+      </div>
+      <div class="step-item" style="display:flex; align-items:center; gap:12px; padding:10px 14px;
+           background:rgba(0,168,120,0.06); border-radius:10px; border:1px solid rgba(0,168,120,0.15);">
+        <span style="font-size:18px;">📝</span>
+        <span style="font-size:13px; color:#1B4D3E; font-weight:500;">Writing personalised recommendations</span>
+      </div>
+    </div>
+
+    <!-- HTMX: fires POST on load, then follows HX-Redirect to results -->
+    <div
+      hx-post="/onboarding/analyze/"
+      hx-trigger="load"
+      hx-swap="none"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+    ></div>
+
+    <p style="font-size:11px; color:#8a9a94; margin-top:8px;">
+      Your data is private and never shared with third parties.
+    </p>
+  </div>
+</div>
+{% endblock %}

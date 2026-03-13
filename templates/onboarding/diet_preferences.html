@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Diet Preferences — Nouri{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center px-4 py-12">
+
+  <!-- Progress -->
+  <div style="width:100%; max-width:600px; margin-bottom:32px;">
+    <div class="flex justify-between mb-2" style="font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#1B4D3E; opacity:0.6;">
+      <span data-i18n="prog.step4">Step 4 of 5</span><span data-i18n="prog.diet">Diet Preferences</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:80%;"></div></div>
+  </div>
+
+  <div class="glass p-8 md:p-10 max-w-2xl w-full">
+    <h2 data-i18n="diet.heading"
+        style="font-family:'Cormorant Garamond',serif; font-size:34px; font-weight:400; color:#1B4D3E; margin-bottom:6px;">
+      Your food preferences
+    </h2>
+    <p style="font-size:14px; color:#5a6a64; margin-bottom:32px; line-height:1.6;">
+      {{ persona_name }} <span data-i18n="diet.subtitle.post">will use this to build a meal plan you'll actually enjoy — no foods you hate, no styles that don't fit your life.</span>
+    </p>
+
+    <form method="post" action="/onboarding/diet-preferences/">
+      {% csrf_token %}
+      <div style="display:flex; flex-direction:column; gap:36px;">
+
+        <!-- ─── Dietary Style ─── -->
+        <section>
+          <label data-i18n="diet.style" class="nouri-label" style="font-size:13px; margin-bottom:14px; display:block;">
+            Dietary Style
+          </label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            {% for val, label, icon, desc in dietary_styles %}
+              <div class="radio-card">
+                <input type="radio" name="dietary_style" id="style_{{ val }}" value="{{ val }}"
+                       {% if profile.dietary_style == val %}checked{% endif %}>
+                <label for="style_{{ val }}" style="flex-direction:column; align-items:flex-start; gap:4px; padding:14px 16px;">
+                  <div style="display:flex; align-items:center; gap:8px; width:100%;">
+                    <div class="radio-dot" style="flex-shrink:0;"></div>
+                    <span style="font-size:18px;">{{ icon }}</span>
+                    <span data-i18n="ds.{{ val }}" style="font-weight:600; font-size:14px;">{{ label }}</span>
+                  </div>
+                  <p data-i18n="ds.{{ val }}.desc" style="font-size:11px; color:#6b7c76; margin:0 0 0 42px; line-height:1.4;">{{ desc }}</p>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <!-- ─── Meals per Day ─── -->
+        <section>
+          <label data-i18n="diet.meals" class="nouri-label" style="font-size:13px; margin-bottom:14px; display:block;">
+            Meals per Day
+          </label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            {% for val, label, badge in meal_frequencies %}
+              <div class="radio-card" style="flex:1; min-width:90px;">
+                <input type="radio" name="meal_frequency" id="freq_{{ val }}" value="{{ val }}"
+                       {% if profile.meal_frequency == val %}checked{% endif %}>
+                <label for="freq_{{ val }}" style="flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:14px 10px; text-align:center;">
+                  <div class="radio-dot"></div>
+                  <span style="font-size:20px; font-weight:700; color:#1B4D3E; font-family:'Cormorant Garamond',serif;">{{ badge }}</span>
+                  <span data-i18n="freq.{{ val }}" style="font-size:11px; color:#5a6a64; line-height:1.3;">{{ label }}</span>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <!-- ─── Cooking Time ─── -->
+        <section>
+          <label data-i18n="diet.cook_time" class="nouri-label" style="font-size:13px; margin-bottom:14px; display:block;">
+            Time Available to Cook (per meal)
+          </label>
+          <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;">
+            {% for val, label, icon in cooking_times %}
+              <div class="radio-card">
+                <input type="radio" name="cooking_time" id="cook_{{ val }}" value="{{ val }}"
+                       {% if profile.cooking_time == val %}checked{% endif %}>
+                <label for="cook_{{ val }}">
+                  <div class="radio-dot"></div>
+                  <span style="font-size:18px;">{{ icon }}</span>
+                  <span data-i18n="cook.{{ val }}" style="font-size:14px;">{{ label }}</span>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <!-- ─── Foods You Dislike ─── -->
+        <section>
+          <label class="nouri-label" for="food_dislikes" style="font-size:13px;">
+            <span data-i18n="diet.dislikes">Foods You Dislike or Won't Eat</span>
+            <span data-i18n="lbl.optional" style="font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; color:#6b7c76; margin-left:6px;">(optional)</span>
+          </label>
+          <textarea class="nouri-input" name="food_dislikes" id="food_dislikes" rows="3"
+                    data-i18n-placeholder="ph.food_dislikes"
+                    placeholder="e.g. cilantro, liver, mushrooms, blue cheese…"
+                    style="resize:vertical;">{{ profile.food_dislikes|default:'' }}</textarea>
+          <p data-i18n="diet.dislikes.help" style="font-size:11px; color:#8a9a94; margin-top:6px;">
+            These won't appear in your meal plan — ever.
+          </p>
+        </section>
+
+        <!-- ─── Additional Restrictions ─── -->
+        <section>
+          <label class="nouri-label" style="font-size:13px; margin-bottom:6px; display:block;">
+            <span data-i18n="diet.restrictions">Additional Dietary Goals</span>
+            <span data-i18n="diet.restrictions.hint" style="font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; color:#6b7c76; margin-left:6px;">(optional — select all that apply)</span>
+          </label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            {% for val, label, icon in diet_restrictions %}
+              <div class="check-card">
+                <input type="checkbox" name="diet_restrictions" id="rest_{{ val }}" value="{{ val }}"
+                       {% if val in selected_restrictions %}checked{% endif %}>
+                <label for="rest_{{ val }}">
+                  <span class="check-icon"></span>
+                  <span style="font-size:13px;">{{ icon }} <span data-i18n="restr.{{ val }}">{{ label }}</span></span>
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+          <div id="rest_other_wrap" style="margin-top:10px; {% if 'other' not in selected_restrictions %}display:none;{% endif %}">
+            <label data-i18n="lbl.specify" class="nouri-label" for="rest_other_text" style="margin-top:8px;">Please specify</label>
+            <input class="nouri-input" type="text" name="diet_restrictions_other" id="rest_other_text"
+                   data-i18n-placeholder="ph.rest_other"
+                   placeholder="e.g. low oxalate, specific carb diet…"
+                   value="{{ profile.diet_restrictions_other|default:'' }}">
+          </div>
+        </section>
+
+      </div>
+
+      {% if error %}
+        <p style="color:#c0392b; font-size:13px; margin-top:16px; padding:10px 14px;
+                  background:rgba(192,57,43,0.08); border-radius:8px; border:1px solid rgba(192,57,43,0.2);">
+          {{ error }}
+        </p>
+      {% endif %}
+
+      <div style="display:flex; gap:12px; margin-top:32px;">
+        <a href="/onboarding/health-questionnaire/" data-i18n="btn.back" class="btn-ghost" style="flex:1; text-align:center;">← Back</a>
+        <button type="submit" data-i18n="btn.continue" class="btn-primary" style="flex:2;">Continue →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelector('#rest_other')?.addEventListener('change', function() {
+    document.getElementById('rest_other_wrap').style.display = this.checked ? 'block' : 'none';
+  });
+</script>
+{% endblock %}

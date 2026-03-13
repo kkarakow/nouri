@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Sign In — Nouri{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-screen px-4" style="margin-top:-72px; padding-top:72px;">
+  <div class="glass p-10 max-w-md w-full">
+    <h2 data-i18n="login.heading"
+        style="font-family:'Cormorant Garamond',serif; font-size:36px; font-weight:400; color:#1B4D3E; margin-bottom:6px;">
+      Welcome back
+    </h2>
+    <p data-i18n="login.subtitle" style="font-size:14px; color:#5a6a64; margin-bottom:28px;">
+      Sign in to continue your nutrition journey.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <label data-i18n="form.email" class="nouri-label" for="id_login">Email</label>
+          <input class="nouri-input" type="email" name="login" id="id_login"
+                 placeholder="you@example.com" autocomplete="email" required
+                 value="{{ form.login.value|default:'' }}">
+          {% if form.login.errors %}
+            <p style="color:#c0392b; font-size:12px; margin-top:4px;">{{ form.login.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+        <div>
+          <label data-i18n="form.password" class="nouri-label" for="id_password">Password</label>
+          <input class="nouri-input" type="password" name="password" id="id_password"
+                 placeholder="••••••••" autocomplete="current-password" required>
+          {% if form.password.errors %}
+            <p style="color:#c0392b; font-size:12px; margin-top:4px;">{{ form.password.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <p style="color:#c0392b; font-size:13px; margin-top:12px; padding:10px 14px;
+                  background:rgba(192,57,43,0.08); border-radius:8px;">
+          {{ form.non_field_errors|join:" " }}
+        </p>
+      {% endif %}
+
+      <button type="submit" data-i18n="nav.signin" class="btn-primary" style="width:100%; margin-top:24px;">
+        Sign In
+      </button>
+    </form>
+
+    <p style="text-align:center; font-size:13px; color:#6b7c76; margin-top:20px;">
+      <span data-i18n="login.no_account">Don't have an account?</span>
+      <a href="/accounts/signup/" data-i18n="login.signup_link"
+         style="color:#00A878; font-weight:500; text-decoration:none;">Sign Up Free</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

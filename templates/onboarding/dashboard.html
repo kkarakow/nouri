@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Nouri{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center px-4 py-10">
+<div style="width:100%; max-width:740px;">
+
+  <!-- ── Weekly report banner ── -->
+  {% if show_report_banner %}
+  <div style="margin-bottom:20px; padding:16px 20px; border-radius:14px;
+              background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(0,168,120,0.08));
+              border:1.5px solid rgba(201,168,76,0.35); display:flex; align-items:center;
+              justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:24px;">📊</span>
+      <div>
+        <div style="font-weight:600; font-size:14px; color:#1B4D3E;">Your weekly report is ready!</div>
+        <div style="font-size:12px; color:#5a6a64;">See how this week went and what to focus on next.</div>
+      </div>
+    </div>
+    <a href="/onboarding/weekly-report/generate/" class="btn-mint" style="font-size:13px; white-space:nowrap;">
+      Generate Report →
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- ── Welcome ── -->
+  <div class="glass p-8 md:p-10" style="margin-bottom:16px;">
+    <h2 style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:400;
+               color:#1B4D3E; margin-bottom:6px;">
+      Welcome back
+    </h2>
+    <p style="font-size:14px; color:#5a6a64; margin:0;">
+      Your personal nutrition hub with <strong>{{ persona_name }}</strong>.
+    </p>
+  </div>
+
+  <!-- ── Quick access cards ── -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
+
+    <!-- Analysis -->
+    <a href="{% if analysis %}/onboarding/analysis/results/{% else %}/onboarding/analysis/{% endif %}"
+       style="text-decoration:none;">
+      <div class="glass p-6" style="height:100%; transition:box-shadow 0.2s;"
+           onmouseenter="this.style.boxShadow='0 6px 24px rgba(27,77,62,0.12)'"
+           onmouseleave="this.style.boxShadow=''">
+        <div style="font-size:28px; margin-bottom:10px;">📊</div>
+        <div style="font-weight:600; font-size:15px; color:#1B4D3E; margin-bottom:4px;">Nutrition Analysis</div>
+        {% if analysis %}
+        <div style="font-size:12px; color:#5a6a64;">
+          Score: <strong style="color:#00A878;">{{ analysis.overall_score }}/100</strong>
+        </div>
+        {% else %}
+        <div style="font-size:12px; color:#C9A84C;">Not generated yet</div>
+        {% endif %}
+      </div>
+    </a>
+
+    <!-- Meal Plan -->
+    <a href="{% if meal_plan %}/onboarding/meal-plan/{% else %}/onboarding/meal-plan/generate/{% endif %}"
+       style="text-decoration:none;">
+      <div class="glass p-6" style="height:100%; transition:box-shadow 0.2s;"
+           onmouseenter="this.style.boxShadow='0 6px 24px rgba(27,77,62,0.12)'"
+           onmouseleave="this.style.boxShadow=''">
+        <div style="font-size:28px; margin-bottom:10px;">🗓️</div>
+        <div style="font-weight:600; font-size:15px; color:#1B4D3E; margin-bottom:4px;">Meal Plan</div>
+        {% if meal_plan %}
+        <div style="font-size:12px; color:#5a6a64;">
+          {{ meal_plan.plan_json.calorie_target|default:"—" }} kcal/day target
+        </div>
+        {% else %}
+        <div style="font-size:12px; color:#C9A84C;">Not generated yet</div>
+        {% endif %}
+      </div>
+    </a>
+
+    <!-- Chat -->
+    <a href="/onboarding/chat/" style="text-decoration:none;">
+      <div class="glass p-6" style="height:100%; transition:box-shadow 0.2s;"
+           onmouseenter="this.style.boxShadow='0 6px 24px rgba(27,77,62,0.12)'"
+           onmouseleave="this.style.boxShadow=''">
+        <div style="font-size:28px; margin-bottom:10px;">💬</div>
+        <div style="font-weight:600; font-size:15px; color:#1B4D3E; margin-bottom:4px;">
+          Chat with {{ persona_name }}
+        </div>
+        <div style="font-size:12px; color:#5a6a64;">Ask questions, log meals</div>
+      </div>
+    </a>
+
+    <!-- Weekly Report -->
+    <a href="{% if latest_report %}/onboarding/weekly-report/{% else %}/onboarding/weekly-report/generate/{% endif %}"
+       style="text-decoration:none;">
+      <div class="glass p-6" style="height:100%; transition:box-shadow 0.2s;"
+           onmouseenter="this.style.boxShadow='0 6px 24px rgba(27,77,62,0.12)'"
+           onmouseleave="this.style.boxShadow=''">
+        <div style="font-size:28px; margin-bottom:10px;">📈</div>
+        <div style="font-weight:600; font-size:15px; color:#1B4D3E; margin-bottom:4px;">Weekly Report</div>
+        {% if latest_report %}
+        <div style="font-size:12px; color:#5a6a64;">
+          Adherence: <strong style="color:{% if latest_report.adherence_score >= 75 %}#00A878{% elif latest_report.adherence_score >= 50 %}#C9A84C{% else %}#c0392b{% endif %};">
+            {{ latest_report.adherence_score }}%
+          </strong>
+        </div>
+        {% else %}
+        <div style="font-size:12px; color:#C9A84C;">Generate your first report</div>
+        {% endif %}
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Latest report snippet ── -->
+  {% if latest_report %}
+  <div class="glass p-6 md:p-8">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <p style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+                color:#1B4D3E; opacity:0.6; margin:0;">Latest Weekly Report</p>
+      <a href="/onboarding/weekly-report/" style="font-size:12px; color:#00A878; text-decoration:none; font-weight:600;">
+        View full report →
+      </a>
+    </div>
+    <p style="font-family:'Cormorant Garamond',serif; font-size:20px; color:#1B4D3E;
+              margin-bottom:10px; font-style:italic;">
+      "{{ latest_report.headline }}"
+    </p>
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+      <div>
+        <span style="font-size:11px; color:#8a9a94; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Adherence</span>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:600;
+                    color:{% if latest_report.adherence_score >= 75 %}#00A878{% elif latest_report.adherence_score >= 50 %}#C9A84C{% else %}#c0392b{% endif %};">
+          {{ latest_report.adherence_score }}%
+        </div>
+      </div>
+      <div>
+        <span style="font-size:11px; color:#8a9a94; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Meals tracked</span>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:600; color:#1B4D3E;">
+          {{ latest_report.meals_followed }}/{{ latest_report.total_meals }}
+        </div>
+      </div>
+      <div>
+        <span style="font-size:11px; color:#8a9a94; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Week of</span>
+        <div style="font-size:13px; font-weight:600; color:#1B4D3E; margin-top:6px;">
+          {{ latest_report.week_start|date:"M d" }} – {{ latest_report.week_end|date:"M d" }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

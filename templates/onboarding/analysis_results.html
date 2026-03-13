@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% block title %}Your Nutrition Analysis — Nouri{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Score circle */
+  .score-circle {
+    width: 110px; height: 110px; border-radius: 50%;
+    background: conic-gradient(#00A878 calc({{ analysis.overall_score }}% * 3.6deg), rgba(27,77,62,0.1) 0deg);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; flex-shrink: 0;
+  }
+  .score-inner {
+    width: 82px; height: 82px; border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+
+  /* Nutrient bar */
+  .nutrient-bar-track {
+    height: 6px; border-radius: 100px;
+    background: rgba(27,77,62,0.1); overflow: hidden; flex: 1;
+  }
+  .nutrient-bar-fill {
+    height: 100%; border-radius: 100px; transition: width 0.8s ease;
+  }
+  .bar-optimal   { background: #00A878; }
+  .bar-adequate  { background: #5ac8a0; }
+  .bar-low       { background: #C9A84C; }
+  .bar-high      { background: #e07b39; }
+  .bar-critical  { background: #c0392b; }
+
+  /* Status badge */
+  .status-badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    border-radius: 100px; padding: 2px 8px; flex-shrink: 0;
+  }
+  .badge-optimal  { background: rgba(0,168,120,0.12); color: #00A878; }
+  .badge-adequate { background: rgba(90,200,160,0.12); color: #3a9a78; }
+  .badge-low      { background: rgba(201,168,76,0.15); color: #8a6a20; }
+  .badge-high     { background: rgba(224,123,57,0.15); color: #a04010; }
+  .badge-critical { background: rgba(192,57,43,0.12); color: #c0392b; }
+
+  /* Lock overlay */
+  .locked-row { opacity: 0.45; pointer-events: none; filter: blur(2px); }
+  .lock-icon { font-size: 12px; color: #8a9a94; flex-shrink: 0; }
+
+  /* Deficiency card */
+  .deficiency-card {
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    border-left: 4px solid;
+  }
+  .sev-mild     { background: rgba(201,168,76,0.07); border-color: #C9A84C; }
+  .sev-moderate { background: rgba(224,123,57,0.07); border-color: #e07b39; }
+  .sev-severe   { background: rgba(192,57,43,0.08); border-color: #c0392b; }
+
+  /* Rec card */
+  .rec-card {
+    background: rgba(255,255,255,0.5); border-radius: 12px;
+    padding: 14px 16px; border: 1px solid rgba(27,77,62,0.1);
+    margin-bottom: 10px;
+  }
+  .pri-high   { border-left: 4px solid #00A878; }
+  .pri-medium { border-left: 4px solid #C9A84C; }
+  .pri-low    { border-left: 4px solid #5a6a64; }
+
+  /* Macro card */
+  .macro-card {
+    background: rgba(255,255,255,0.55); border-radius: 14px;
+    padding: 16px; border: 1.5px solid rgba(27,77,62,0.1);
+    text-align: center; flex: 1; min-width: 120px;
+  }
+
+  /* Section heading */
+  .section-heading {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+    color: #1B4D3E; opacity: 0.55; margin-bottom: 12px; margin-top: 4px;
+  }
+
+  /* Category heading */
+  .cat-heading {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #5a6a64; margin: 20px 0 10px; padding-bottom: 6px;
+    border-bottom: 1px solid rgba(27,77,62,0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center px-4 py-10">
+<div style="width:100%; max-width:720px;">
+
+  {% if is_demo_preview %}
+  <!-- ── Premium Preview banner ── -->
+  <div style="margin-bottom:16px; padding:11px 18px; border-radius:12px;
+              background:rgba(201,168,76,0.10); border:1.5px solid rgba(201,168,76,0.35);
+              display:flex; align-items:center; gap:10px;">
+    <span style="color:#C9A84C; font-size:15px; flex-shrink:0;">✦</span>
+    <span style="font-size:13px; color:#8a6a20; font-weight:500;">
+      Premium Preview — this feature will require a subscription
+    </span>
+  </div>
+  {% endif %}
+
+  {% if analysis.status == 'error' %}
+  <!-- ── Error state ── -->
+  <div class="glass p-8 text-center">
+    <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+    <h2 style="font-family:'Cormorant Garamond',serif; font-size:28px; color:#1B4D3E; margin-bottom:10px;">
+      Analysis unavailable
+    </h2>
+    <p style="font-size:14px; color:#5a6a64; margin-bottom:24px;">
+      Something went wrong while analysing your diet. Please try again.
+    </p>
+    <a href="/onboarding/analysis/" class="btn-primary">Try Again</a>
+  </div>
+
+  {% else %}
+
+  <!-- ── Header + Score ── -->
+  <div class="glass p-8 md:p-10" style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+
+      <!-- Score circle -->
+      <div class="score-circle">
+        <div class="score-inner">
+          <span style="font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:600; color:#1B4D3E; line-height:1;">
+            {{ analysis.overall_score }}
+          </span>
+          <span style="font-size:10px; font-weight:600; letter-spacing:0.06em; color:#5a6a64;">/ 100</span>
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:200px;">
+        <p style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+                  color:#00A878; margin-bottom:4px;">Diet Quality Score</p>
+        <h2 style="font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:400;
+                   color:#1B4D3E; margin-bottom:8px; line-height:1.2;">
+          Your Nutrition Analysis
+        </h2>
+        <p style="font-size:14px; color:#5a6a64; line-height:1.6; margin:0;">
+          {{ analysis.summary }}
+        </p>
+      </div>
+    </div>
+
+    {% if analysis.persona_note %}
+    <div style="margin-top:20px; padding:14px 16px; background:rgba(0,168,120,0.07);
+                border-radius:12px; border:1px solid rgba(0,168,120,0.18);">
+      <p style="font-size:13px; color:#1B4D3E; line-height:1.6; margin:0;">
+        <strong>{{ persona_name }}:</strong> {{ analysis.persona_note }}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Macro summary cards ── -->
+  {% with nutrients=analysis.nutrients %}
+  {% if nutrients %}
+  <div class="glass p-6 md:p-8" style="margin-bottom:16px;">
+    <p class="section-heading">Daily Averages — Key Macros</p>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+
+      {% with cal=nutrients.calories %}
+      {% if cal %}
+      <div class="macro-card">
+        <div style="font-size:22px; margin-bottom:4px;">🔥</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:600; color:#1B4D3E;">
+          {{ cal.value|floatformat:0 }}
+        </div>
+        <div style="font-size:11px; color:#5a6a64;">kcal</div>
+      </div>
+      {% endif %}{% endwith %}
+
+      {% with p=nutrients.protein_g %}
+      {% if p %}
+      <div class="macro-card">
+        <div style="font-size:22px; margin-bottom:4px;">💪</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:600; color:#1B4D3E;">
+          {{ p.value|floatformat:0 }}
+        </div>
+        <div style="font-size:11px; color:#5a6a64;">g protein</div>
+      </div>
+      {% endif %}{% endwith %}
+
+      {% with c=nutrients.carbohydrates_g %}
+      {% if c %}
+      <div class="macro-card">
+        <div style="font-size:22px; margin-bottom:4px;">🌾</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:600; color:#1B4D3E;">
+          {{ c.value|floatformat:0 }}
+        </div>
+        <div style="font-size:11px; color:#5a6a64;">g carbs</div>
+      </div>
+      {% endif %}{% endwith %}
+
+      {% with f=nutrients.fat_g %}
+      {% if f %}
+      <div class="macro-card">
+        <div style="font-size:22px; margin-bottom:4px;">🫒</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:600; color:#1B4D3E;">
+          {{ f.value|floatformat:0 }}
+        </div>
+        <div style="font-size:11px; color:#5a6a64;">g fat</div>
+      </div>
+      {% endif %}{% endwith %}
+
+      {% with fi=nutrients.fiber_g %}
+      {% if fi %}
+      <div class="macro-card">
+        <div style="font-size:22px; margin-bottom:4px;">🥦</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:600; color:#1B4D3E;">
+          {{ fi.value|floatformat:0 }}
+        </div>
+        <div style="font-size:11px; color:#5a6a64;">g fiber</div>
+      </div>
+      {% endif %}{% endwith %}
+
+    </div>
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- ── Full Nutrient Breakdown ── -->
+  <div class="glass p-6 md:p-8" style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <p class="section-heading" style="margin-bottom:0;">47-Nutrient Breakdown</p>
+      {% if not is_premium %}
+      <span style="font-size:11px; color:#C9A84C; font-weight:600;">
+        🔒 Upgrade to unlock all nutrients
+      </span>
+      {% endif %}
+    </div>
+
+    {% for group in nutrient_groups %}
+    <p class="cat-heading">{{ group.category }}</p>
+    {% for item in group.items %}
+    <div class="{% if item.locked %}locked-row{% endif %}"
+         style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+      {% if item.locked %}
+        <span class="lock-icon">🔒</span>
+      {% endif %}
+      <span style="font-size:13px; color:#1B4D3E; min-width:160px; flex-shrink:0;">
+        {{ item.label }}
+        <span style="font-size:11px; color:#8a9a94; margin-left:2px;">{{ item.unit }}</span>
+      </span>
+      <div class="nutrient-bar-track">
+        <div class="nutrient-bar-fill bar-{{ item.status }}"
+             style="width: {% if item.dri_percent > 150 %}100{% else %}{{ item.dri_percent }}{% endif %}%;"></div>
+      </div>
+      <span style="font-size:12px; color:#5a6a64; min-width:38px; text-align:right;">
+        {{ item.dri_percent }}%
+      </span>
+      <span class="status-badge badge-{{ item.status }}">{{ item.status }}</span>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- ── Deficiencies ── -->
+  {% if deficiencies %}
+  <div class="glass p-6 md:p-8" style="margin-bottom:16px;">
+    <p class="section-heading">Identified Gaps</p>
+    {% for d in deficiencies %}
+    <div class="deficiency-card sev-{{ d.severity }}">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-size:14px; font-weight:600; color:#1B4D3E;">{{ d.nutrient }}</span>
+        <span style="font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+                     padding:2px 9px; border-radius:100px;
+                     {% if d.severity == 'severe' %}background:rgba(192,57,43,0.12); color:#c0392b;
+                     {% elif d.severity == 'moderate' %}background:rgba(224,123,57,0.12); color:#a04010;
+                     {% else %}background:rgba(201,168,76,0.15); color:#8a6a20;{% endif %}">
+          {{ d.severity }}
+        </span>
+      </div>
+      <p style="font-size:13px; color:#5a6a64; margin:0 0 8px; line-height:1.5;">{{ d.impact }}</p>
+      {% if d.food_sources %}
+      <p style="font-size:11px; color:#6b7c76; margin:0;">
+        <strong style="color:#1B4D3E;">Food sources:</strong>
+        {{ d.food_sources|join:", " }}
+      </p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Recommendations ── -->
+  {% if recommendations %}
+  <div class="glass p-6 md:p-8" style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <p class="section-heading" style="margin-bottom:0;">{{ persona_name }}'s Recommendations</p>
+      {% if not is_premium %}
+      <span style="font-size:11px; color:#8a9a94;">Showing 3 of {{ analysis.recommendations|length }}</span>
+      {% endif %}
+    </div>
+    {% for rec in recommendations %}
+    <div class="rec-card pri-{{ rec.priority }}">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="font-size:14px; font-weight:600; color:#1B4D3E;">{{ rec.title }}</span>
+        <span style="font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+                     padding:2px 8px; border-radius:100px; margin-left:auto;
+                     {% if rec.priority == 'high' %}background:rgba(0,168,120,0.12); color:#00A878;
+                     {% elif rec.priority == 'medium' %}background:rgba(201,168,76,0.15); color:#8a6a20;
+                     {% else %}background:rgba(90,106,100,0.1); color:#5a6a64;{% endif %}">
+          {{ rec.priority }}
+        </span>
+      </div>
+      <p style="font-size:13px; color:#5a6a64; margin:0; line-height:1.6;">{{ rec.detail }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Upgrade CTA ── -->
+  {% if not is_premium %}
+  <div style="background: linear-gradient(135deg, rgba(27,77,62,0.06), rgba(201,168,76,0.08));
+              border: 1.5px solid rgba(201,168,76,0.3); border-radius: 16px; padding: 28px 28px;
+              margin-bottom: 16px; text-align:center;">
+    <div style="font-size:32px; margin-bottom:12px;">✨</div>
+    <h3 style="font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:400;
+               color:#1B4D3E; margin-bottom:8px;">
+      Unlock your full clinical report
+    </h3>
+    <p style="font-size:14px; color:#5a6a64; margin-bottom:20px; line-height:1.6;">
+      Premium gives you all 47 nutrients, full recommendations, a personalised 7-day meal plan,
+      and weekly progress tracking.
+    </p>
+    <div style="display:flex; gap:14px; flex-direction:column; max-width:280px; margin:0 auto;">
+      <a href="#" class="btn-mint" style="text-align:center;">Upgrade to Premium →</a>
+      <a href="/onboarding/food-recall/" style="font-size:13px; color:#5a6a64; text-decoration:none;">
+        ← Re-do food recall
+      </a>
+    </div>
+  </div>
+  {% elif is_demo_preview %}
+  <div style="background: linear-gradient(135deg, rgba(27,77,62,0.06), rgba(201,168,76,0.08));
+              border: 1.5px dashed rgba(201,168,76,0.4); border-radius: 16px; padding: 20px 24px;
+              margin-bottom: 16px; text-align:center; opacity:0.7;">
+    <div style="font-size:20px; margin-bottom:8px;">✨</div>
+    <p style="font-size:13px; color:#8a6a20; margin-bottom:12px; font-weight:500;">
+      Upgrade to Premium — coming soon
+    </p>
+    <a href="#" class="btn-ghost" style="font-size:12px; opacity:0.6; cursor:default; pointer-events:none;">
+      Upgrade to Premium →
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- ── Footer actions ── -->
+  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:4px;">
+    <a href="/onboarding/food-recall/" class="btn-ghost">← Update Food Recall</a>
+    <a href="/onboarding/analysis/" class="btn-ghost">Re-run Analysis</a>
+    <a href="/onboarding/meal-plan/generate/" class="btn-mint">🗓️ Meal Plan →</a>
+    <a href="/onboarding/chat/" class="btn-primary">💬 Chat →</a>
+  </div>
+
+  {% endif %}{# end error/success #}
+
+</div>
+</div>
+{% endblock %}
